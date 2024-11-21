@@ -6,7 +6,6 @@ import axios from "axios";
 export async function POST(req: Request) {
   try {
     const { url, token } = await req.json();
-    console.log(url, "urls");
 
     if (!url) {
       return NextResponse.json({ message: "URL is required" }, { status: 400 });

@@ -1,9 +1,9 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useState } from "react";
 import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable"; // Import autoTable correctly
 
 interface ApiResponse {
   url: string;
@@ -39,41 +39,92 @@ export default function Home() {
     setIsLoading(true);
     if (!fileData || !domain) {
       alert("Please upload an Excel file and enter a domain.");
+      setIsLoading(false);
       return;
     }
 
-    const responses = await Promise.all(
-      fileData.map(async (row) => {
-        try {
-          const response = await fetch("/api/check-api", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              url: `${domain}${row.paths}`,
-              token: bearerToken,
-            }),
-          });
-          const result = await response.json();
-          return { url: row.paths, ...result };
-        } catch (error) {
-          return { url: row.paths, error: (error as Error).message };
-        }
-      })
-    );
+    function isValidUrl(url: any) {
+      try {
+        new URL(url);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
 
-    setIsLoading(false);
-    setResults(responses);
+    if (!isValidUrl(`${domain}${fileData[0].paths}`)) {
+      alert("Invalid url found.Execution terminated");
+      setResults([]);
+      return;
+    } else {
+      const responses = await Promise.all(
+        fileData.map(async (row) => {
+          try {
+            const response = await fetch("/api/check-api", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                url: `${domain}${row.paths}`,
+                token: bearerToken,
+              }),
+            });
+            const result = await response.json();
+            return { url: row.paths, ...result };
+          } catch (error) {
+            return { url: row.paths, error: (error as Error).message };
+          }
+        })
+      );
+
+      setIsLoading(false);
+      console.log(responses, "responses");
+
+      setResults(responses);
+    }
+  };
+
+  const downloadReport = () => {
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text("API Response Report", 14, 20);
+
+    // Subtitle
+    doc.setFontSize(12);
+    doc.text(`Generated with Sparrow API Checker`, 14, 30);
+    doc.text(`https://sparrow-api-checker.vercel.app/`, 14, 40);
+
+    // Table Header
+    const headers = [["URL", "Status", "Response"]];
+    const data = results.map((result) => [
+      result.url,
+      result.status || "Error",
+      (result?.text?.message ? result?.text?.message : result?.text?.error) ||
+        result?.text ||
+        "",
+    ]);
+
+    // Add Table using autoTable
+    autoTable(doc, {
+      head: headers,
+      body: data,
+      startY: 50,
+    });
+
+    // Save PDF
+    doc.save("api-response-report.pdf");
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 !text-black yar">
-      <div className="w-full max-w-3xl bg-white shadow-md rounded-lg p-6">
+      <div className="w-full max-w-6xl bg-white shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">
           Sparrow API Response Checker
         </h1>
         <p>
-          Excel should have only one sheet and urls should come under paths
-          field.
+          Excel should have only one sheet and URLs should come under the{" "}
+          <strong>paths</strong> field.
         </p>
         <div className="space-y-4">
           <input
@@ -108,38 +159,51 @@ export default function Home() {
             {!isLoading ? (
               "Check APIs"
             ) : (
-              <div className=" flex justify-center items-center gap-3">
+              <div className="flex justify-center items-center gap-3">
                 Loading..
-                <div className=" animate-spin bg-gradient-to-r from-blue-800 to-blue-600  h-5 aspect-square rounded-full"></div>
+                <div className="animate-spin bg-gradient-to-r from-blue-800 to-blue-600 h-5 aspect-square rounded-full"></div>
               </div>
             )}
           </button>
         </div>
         {results.length > 0 && (
-          <table className="mt-6 w-full border-collapse border border-gray-300">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 px-4 py-2">URL</th>
-                <th className="border border-gray-300 px-4 py-2">Status</th>
-                <th className="border border-gray-300 px-4 py-2">Response</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((result) => (
-                <tr key={result.url}>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {result.url}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {result.status || "Error"}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {result?.text?.message || result?.text || ""}
-                  </td>
+          <>
+            <button
+              onClick={downloadReport}
+              className="mt-6 py-2 px-4 bg-green-600 text-white font-bold rounded-md hover:bg-green-700"
+            >
+              Download Report
+            </button>
+            <table className="mt-6 w-full border-collapse border border-gray-300">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 px-4 py-2">URL</th>
+                  <th className="border border-gray-300 px-4 py-2">Status</th>
+                  <th className="border border-gray-300 px-4 py-2">Response</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {results.map((result) => (
+                  <tr key={result?.url}>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {domain}
+                      {result?.url}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {result?.status || "Error"}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {(result?.text?.message
+                        ? result?.text?.message
+                        : result?.text?.error) ||
+                        result?.text ||
+                        ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
     </div>
