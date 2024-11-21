@@ -1,18 +1,19 @@
 "use client";
 
-import { randomInt } from "crypto";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from "react";
 import * as XLSX from "xlsx";
 
 interface ApiResponse {
-  paths: string;
+  url: string;
   status?: number | string;
-  text?: string;
+  text?: any;
   error?: string;
 }
 
 export default function Home() {
-  const [fileData, setFileData] = useState<{ URL: string }[]>([]);
+  const [fileData, setFileData] = useState<{ paths: string }[]>([]);
   const [domain, setDomain] = useState<string>("");
   const [bearerToken, setBearerToken] = useState<string>("");
   const [results, setResults] = useState<ApiResponse[]>([]);
@@ -27,7 +28,7 @@ export default function Home() {
       const workbook = XLSX.read(data, { type: "array" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const parsedData: { URL: string }[] = XLSX.utils.sheet_to_json(sheet);
+      const parsedData: { paths: string }[] = XLSX.utils.sheet_to_json(sheet);
       setFileData(parsedData);
     };
     reader.readAsArrayBuffer(file);
@@ -67,8 +68,12 @@ export default function Home() {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 !text-black yar">
       <div className="w-full max-w-3xl bg-white shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">
-          API Response Checker
+          Sparrow API Response Checker
         </h1>
+        <p>
+          Excel should have only one sheet and urls should come under paths
+          field.
+        </p>
         <div className="space-y-4">
           <input
             type="text"
@@ -112,7 +117,7 @@ export default function Home() {
               </tr>
             </thead>
             <tbody>
-              {results.map((result, index) => (
+              {results.map((result) => (
                 <tr key={result.url}>
                   <td className="border border-gray-300 px-4 py-2">
                     {result.url}
