@@ -127,13 +127,18 @@ export default function Home() {
           <strong>paths</strong> field.
         </p>
         <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Enter domain (e.g., https://api.example.com)"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-400"
-          />
+          <div className=" relative  flex-row flex justify-center items-center">
+            <input
+              type="text"
+              placeholder="Enter domain (e.g., https://api.example.com)"
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+            />
+            <p className=" absolute  right-3 text-green-500 top-2 bottom-0 h-full my-0">
+              GET
+            </p>
+          </div>
           <input
             type="text"
             placeholder="Enter Bearer Token (optional)"
