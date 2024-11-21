@@ -17,6 +17,7 @@ export default function Home() {
   const [domain, setDomain] = useState<string>("");
   const [bearerToken, setBearerToken] = useState<string>("");
   const [results, setResults] = useState<ApiResponse[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -35,6 +36,7 @@ export default function Home() {
   };
 
   const checkApis = async () => {
+    setIsLoading(true);
     if (!fileData || !domain) {
       alert("Please upload an Excel file and enter a domain.");
       return;
@@ -59,8 +61,7 @@ export default function Home() {
       })
     );
 
-    console.log(responses, "responses");
-
+    setIsLoading(false);
     setResults(responses);
   };
 
@@ -101,10 +102,17 @@ export default function Home() {
             className={`w-full py-2 text-white font-bold rounded-md ${
               fileData.length && domain
                 ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-gray-400 cursor-not-allowed"
+                : "bg-gray-400 "
             }`}
           >
-            Check APIs
+            {!isLoading ? (
+              "Check APIs"
+            ) : (
+              <div className=" flex justify-center items-center gap-3">
+                Loading..
+                <div className=" animate-spin bg-gradient-to-r from-blue-800 to-blue-600  h-5 aspect-square rounded-full"></div>
+              </div>
+            )}
           </button>
         </div>
         {results.length > 0 && (
