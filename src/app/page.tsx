@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import { useState } from "react";
@@ -48,6 +50,8 @@ export default function Home() {
         new URL(url);
         return true;
       } catch (e) {
+        console.log(e);
+
         return false;
       }
     }
