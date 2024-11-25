@@ -5,7 +5,8 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable"; // Import autoTable correctly
+import { Github } from "lucide-react";
+import autoTable from "jspdf-autotable";
 
 interface ApiResponse {
   url: string;
@@ -90,16 +91,13 @@ export default function Home() {
   const downloadReport = () => {
     const doc = new jsPDF();
 
-    // Title
     doc.setFontSize(18);
     doc.text("API Response Report", 14, 20);
 
-    // Subtitle
     doc.setFontSize(12);
     doc.text(`Generated with Sparrow API Checker`, 14, 30);
     doc.text(`https://sparrow-api-checker.vercel.app/`, 14, 40);
 
-    // Table Header
     const headers = [["URL", "Status", "Response"]];
     const data = results.map((result) => [
       result.url,
@@ -109,22 +107,29 @@ export default function Home() {
         "",
     ]);
 
-    // Add Table using autoTable
     autoTable(doc, {
       head: headers,
       body: data,
       startY: 50,
     });
 
-    // Save PDF
     doc.save("api-response-report.pdf");
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 !text-black yar">
       <div className="w-full max-w-6xl bg-white shadow-md rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 flex gap-2  items-center">
           Sparrow API Response Checker
+          <a
+            href="https://github.com/naeemudheenp/sparrow-api-checker/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground  transition-colors"
+            aria-label="View project on GitHub"
+          >
+            <Github className="h-6 w-6 hover:border-black hover:bg-white transition-all" />
+          </a>
         </h1>
         <p>
           Excel should have only one sheet and URLs should come under the{" "}
